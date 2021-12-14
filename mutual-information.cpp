@@ -302,6 +302,7 @@ namespace MI
 double Cost(const std::vector<uint8_t> & grayValues,
             const std::vector<uint8_t> & reflectanceValues,
             int bins,
+            bool normalized,
             bool draw,
             std::string debugImagesPrefixPath)
 {
@@ -330,7 +331,10 @@ double Cost(const std::vector<uint8_t> & grayValues,
         }
     }
 
-    double cost = 0;
+    double HX = 0;
+    double HY = 0;
+    double HXY = 0;
+    double MI = 0;
     for (int i = 0; i < bins; i++)
     {
         for (int j = 0; j < bins; j++)
@@ -340,11 +344,25 @@ double Cost(const std::vector<uint8_t> & grayValues,
             double py = prob.refcProbData[j];
             if (pxy > 0 && px > 0 && py > 0)
             {
-                cost += pxy * std::log(pxy / px / py);
+                if (normalized)
+                {
+                    HX += px * log(1.0 / px);
+                    HY += py * log(1.0 / py);
+                    HXY += pxy * log(1.0 / pxy);
+                }
+                else
+                {
+                    MI += pxy * std::log(pxy / px / py);
+                }
             }
         }
     }
-    return cost;
+    if (normalized)
+    {
+        double normalized_mi = (HX + HY) / HXY;
+        return normalized_mi;
+    }
+    return MI;
 }
 
 } // namespace MI
